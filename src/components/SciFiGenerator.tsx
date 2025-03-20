@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
-// Gemini API Key
-const GEMINI_API_KEY = "AIzaSyBRg34-3AS1XPFi0cS2p13iNmtIJvY6Rp8";
+// DeepSeek API key
+const DEEPSEEK_API_KEY = "SK-392A95FC7D2445F6B6C79C17725192D1";
 
 // 类型定义
 type QuoteCategory = "classic" | "chinese" | "movies" | "scientists";
@@ -81,58 +81,76 @@ const SciFiGenerator = () => {
       
       switch(category) {
         case "classic":
-          prompt = `生成一句来自经典科幻作品的名言或警句，主题是关于"${theme}"。格式为：{"text": "名言内容", "source": "作品名", "author": "作者名"}`;
+          prompt = `创造一句原创的科幻名言或警句，主题是关于"${theme || "宇宙"}"。不要引用已有的名言，而是创造全新的名言。请直接返回JSON格式：{"text": "名言内容", "author": "架空的科幻作家名", "source": "架空的科幻作品名"}`;
           break;
         case "chinese":
-          prompt = `生成一句来自中国科幻作品(如《三体》等)的名言或警句，主题是关于"${theme}"。格式为：{"text": "名言内容", "source": "作品名", "author": "作者名"}`;
+          prompt = `创造一句原创的中国风科幻名言或警句，主题是关于"${theme || "文明"}"。不要引用已有的名言，而是创造全新的名言。请直接返回JSON格式：{"text": "名言内容", "author": "架空的中国科幻作家名", "source": "架空的中国科幻作品名"}`;
           break;
         case "movies":
-          prompt = `生成一句来自科幻电影的经典台词，主题是关于"${theme}"。格式为：{"text": "台词内容", "source": "电影名", "author": "角色或演员"}`;
+          prompt = `创造一句原创的科幻电影台词，主题是关于"${theme || "未来"}"。不要引用已有的台词，而是创造全新的台词。请直接返回JSON格式：{"text": "台词内容", "author": "架空的科幻电影角色名", "source": "架空的科幻电影名"}`;
           break;
         case "scientists":
-          prompt = `生成一句著名科学家(如爱因斯坦、霍金、卡尔·萨根等)关于科学或未来的名言，主题是关于"${theme}"。格式为：{"text": "名言内容", "author": "科学家名字"}`;
+          prompt = `创造一句原创的未来科学家关于科学或宇宙的名言，主题是关于"${theme || "探索"}"。不要引用已有的名言，而是创造全新的名言。请直接返回JSON格式：{"text": "名言内容", "author": "架空的未来科学家名"}`;
           break;
       }
       
-      // 调用Gemini API
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
+      // 调用DeepSeek API
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 200,
-          }
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: "你是一个专门创作原创科幻名言警句的AI助手。请直接以JSON格式返回结果，不要有任何额外解释或前后缀。"
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 150
         })
       });
 
       const data = await response.json();
       
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
-        const responseText = data.candidates[0].content.parts[0].text;
+      if (data.choices && data.choices.length > 0 && data.choices[0].message.content) {
+        const responseText = data.choices[0].message.content;
+        console.log("DeepSeek API response:", responseText);
+        
         try {
-          // 尝试解析JSON响应
-          const jsonStr = responseText.match(/\{.*\}/s)![0];
-          const quoteData = JSON.parse(jsonStr);
-          setGeneratedQuote(quoteData);
+          // 尝试提取和解析JSON响应
+          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const jsonStr = jsonMatch[0];
+            const quoteData = JSON.parse(jsonStr);
+            setGeneratedQuote(quoteData);
+          } else {
+            // 如果没有找到JSON格式，使用文本作为名言
+            setGeneratedQuote({ text: responseText });
+          }
         } catch (e) {
+          console.error("解析JSON失败:", e);
           // 如果不是有效的JSON，直接使用文本
           setGeneratedQuote({ text: responseText });
         }
       } else {
         // 处理错误
-        throw new Error("生成失败");
+        const errorMessage = data.error?.message || "生成失败，请重试";
+        console.error("API错误:", errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error("生成科幻名言失败:", error);
       toast.error("生成失败，请重试");
+      // 如果API调用失败，使用随机名言
+      generateRandomQuote();
     } finally {
       setIsGenerating(false);
     }
@@ -196,7 +214,7 @@ const SciFiGenerator = () => {
     <section 
       id="generator" 
       className="section-padding bg-gradient-to-b from-white to-gray-50"
-      ref={ref as React.RefObject<HTMLDivElement>}
+      ref={ref}
     >
       <div className="section-container">
         <div className="max-w-3xl mx-auto text-center mb-12">
@@ -205,8 +223,8 @@ const SciFiGenerator = () => {
             科幻名言生成器
           </h2>
           <p className="body-md text-gray-600 max-w-xl mx-auto mb-8">
-            输入主题关键词，AI将为您生成经典科幻作品中的名言警句，或科学大师的至理名言。
-            支持《沙丘》、《三体》、《接触》等经典作品风格。
+            输入主题关键词，AI将为您创作原创科幻名言警句。
+            支持经典科幻、中国科幻、科幻电影和科学家名言多种风格。
           </p>
         </div>
 
@@ -274,12 +292,12 @@ const SciFiGenerator = () => {
                     {isGenerating ? (
                       <>
                         <Sparkles className="animate-spin mr-2" />
-                        正在生成...
+                        正在创作原创名言...
                       </>
                     ) : (
                       <>
                         <Wand2 className="mr-2" />
-                        生成科幻名言
+                        创作科幻名言
                       </>
                     )}
                   </button>
@@ -302,7 +320,7 @@ const SciFiGenerator = () => {
                   {isGenerating ? (
                     <div className="text-center animate-pulse">
                       <Sparkles className="w-12 h-12 text-indigo-400 mb-4 mx-auto animate-float" />
-                      <p className="text-gray-600">正在生成科幻名言...</p>
+                      <p className="text-gray-600">正在创作原创科幻名言...</p>
                     </div>
                   ) : generatedQuote ? (
                     <div className="w-full h-full p-8 flex flex-col items-center justify-center text-center max-w-2xl mx-auto animate-scale-in">
@@ -321,7 +339,7 @@ const SciFiGenerator = () => {
                   ) : (
                     <div className="text-center p-8">
                       <Wand2 className="w-12 h-12 text-gray-300 mb-4 mx-auto" />
-                      <p className="text-gray-600 mb-2">您的科幻名言将在这里显示</p>
+                      <p className="text-gray-600 mb-2">您的原创科幻名言将在这里显示</p>
                       <p className="text-xs text-gray-400">输入主题关键词并点击生成按钮</p>
                     </div>
                   )}
@@ -350,13 +368,13 @@ const SciFiGenerator = () => {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h4 className="font-medium text-lg mb-3">关于科幻名言生成器</h4>
                   <p className="mb-3 text-gray-700">
-                    本工具使用谷歌的Gemini AI模型，可以生成经典科幻作品中的名言警句和科幻大师的至理名言。
+                    本工具使用DeepSeek AI模型，可以创作原创科幻名言警句，不只是摘抄已有的经典语录。
                   </p>
                   <p className="mb-3 text-gray-700">
-                    支持的科幻作品包括但不限于《沙丘》、《三体》、《基地》、《银河系漫游指南》、《接触》等。
+                    支持多种风格，包括经典科幻、中国科幻、科幻电影台词以及未来科学家的名言警句。
                   </p>
                   <p className="text-gray-700">
-                    科幻名人包括阿西莫夫、卡尔·萨根、阿瑟·C·克拉克、刘慈欣等科幻作家和科学家。
+                    每次生成的内容都是独一无二的，为您的创作提供全新灵感。
                   </p>
                 </div>
               </TabsContent>
