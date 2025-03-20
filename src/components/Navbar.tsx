@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
@@ -9,13 +10,14 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
-  // 导航链接
+  // 导航链接 - 只保留名言生成器
   const navLinks = [
-    { name: "名言生成器", href: "#generator" },
-    { name: "名言集锦", href: "#quotes" },
-    { name: "科幻素材", href: "#resources" },
-    { name: "博客", href: "/blog" },
-    { name: "帮助", href: "/help" }
+    { name: "名言生成器", href: "#generator" }
+    // 注释掉暂时不需要的链接
+    // { name: "名言集锦", href: "#quotes" },
+    // { name: "科幻素材", href: "#resources" },
+    // { name: "博客", href: "/blog" },
+    // { name: "帮助", href: "/help" }
   ];
 
   // 滚动监听

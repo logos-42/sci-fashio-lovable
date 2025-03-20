@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 // Gemini API Key
 const GEMINI_API_KEY = "AIzaSyBRg34-3AS1XPFi0cS2p13iNmtIJvY6Rp8";
@@ -81,21 +82,21 @@ const SciFiGenerator = () => {
       
       switch(category) {
         case "classic":
-          prompt = `生成一句来自经典科幻作品的名言或警句，主题是关于"${theme}"。格式为：{"text": "名言内容", "source": "作品名", "author": "作者名"}`;
+          prompt = `生成一句来自经典科幻作品的名言或警句，主题是关于"${theme}"。以JSON格式返回：{"text": "名言内容", "source": "作品名", "author": "作者名"}`;
           break;
         case "chinese":
-          prompt = `生成一句来自中国科幻作品(如《三体》等)的名言或警句，主题是关于"${theme}"。格式为：{"text": "名言内容", "source": "作品名", "author": "作者名"}`;
+          prompt = `生成一句来自中国科幻作品(如《三体》等)的名言或警句，主题是关于"${theme}"。以JSON格式返回：{"text": "名言内容", "source": "作品名", "author": "作者名"}`;
           break;
         case "movies":
-          prompt = `生成一句来自科幻电影的经典台词，主题是关于"${theme}"。格式为：{"text": "台词内容", "source": "电影名", "author": "角色或演员"}`;
+          prompt = `生成一句来自科幻电影的经典台词，主题是关于"${theme}"。以JSON格式返回：{"text": "台词内容", "source": "电影名", "author": "角色或演员"}`;
           break;
         case "scientists":
-          prompt = `生成一句著名科学家(如爱因斯坦、霍金、卡尔·萨根等)关于科学或未来的名言，主题是关于"${theme}"。格式为：{"text": "名言内容", "author": "科学家名字"}`;
+          prompt = `生成一句著名科学家(如爱因斯坦、霍金、卡尔·萨根等)关于科学或未来的名言，主题是关于"${theme}"。以JSON格式返回：{"text": "名言内容", "author": "科学家名字"}`;
           break;
       }
       
       // 调用Gemini API
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + GEMINI_API_KEY, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,22 +114,36 @@ const SciFiGenerator = () => {
         })
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API错误:", errorData);
+        throw new Error("API请求失败，状态码: " + response.status);
+      }
+
       const data = await response.json();
       
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0].text) {
         const responseText = data.candidates[0].content.parts[0].text;
+        
         try {
-          // 尝试解析JSON响应
-          const jsonStr = responseText.match(/\{.*\}/s)![0];
-          const quoteData = JSON.parse(jsonStr);
-          setGeneratedQuote(quoteData);
+          // 尝试从响应中提取JSON部分
+          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const jsonStr = jsonMatch[0];
+            const quoteData = JSON.parse(jsonStr);
+            setGeneratedQuote(quoteData);
+          } else {
+            // 如果没有找到JSON格式，则将整个响应作为文本
+            setGeneratedQuote({ text: responseText });
+          }
         } catch (e) {
-          // 如果不是有效的JSON，直接使用文本
+          console.error("解析响应失败:", e);
           setGeneratedQuote({ text: responseText });
         }
       } else {
         // 处理错误
-        throw new Error("生成失败");
+        console.error("未获取到预期的响应格式:", data);
+        throw new Error("生成失败: 未获取到预期的响应格式");
       }
     } catch (error) {
       console.error("生成科幻名言失败:", error);
@@ -266,23 +281,23 @@ const SciFiGenerator = () => {
                     </div>
                   </div>
                   
-                  <button
+                  <Button
                     onClick={generateQuote}
                     disabled={isGenerating}
-                    className="w-full button-primary flex items-center justify-center"
+                    className="w-full"
                   >
                     {isGenerating ? (
                       <>
-                        <Sparkles className="animate-spin mr-2" />
+                        <Sparkles className="animate-spin" />
                         正在生成...
                       </>
                     ) : (
                       <>
-                        <Wand2 className="mr-2" />
+                        <Wand2 />
                         生成科幻名言
                       </>
                     )}
-                  </button>
+                  </Button>
                 </div>
 
                 {/* 生成结果展示区 */}
@@ -330,18 +345,19 @@ const SciFiGenerator = () => {
                 {/* 控制按钮 */}
                 {generatedQuote && (
                   <div className="mt-6 flex justify-between items-center animate-fade-in">
-                    <button 
+                    <Button 
                       onClick={copyToClipboard}
-                      className="button-secondary text-sm flex items-center"
+                      variant="outline"
+                      className="text-sm"
                     >
-                      <Copy className="mr-1 w-4 h-4" /> 复制名言
-                    </button>
-                    <button 
+                      <Copy className="w-4 h-4" /> 复制名言
+                    </Button>
+                    <Button 
                       onClick={shareQuote}
-                      className="button-primary text-sm flex items-center"
+                      className="text-sm"
                     >
-                      分享到社交媒体 <Share2 className="ml-1 w-4 h-4" />
-                    </button>
+                      分享到社交媒体 <Share2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 )}
               </TabsContent>
