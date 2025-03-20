@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
  */
 export const useInView = (threshold = 0.1) => {
   const [isInView, setIsInView] = useState(false);
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const currentRef = ref.current;
@@ -50,7 +50,7 @@ export const useImageReveal = () => {
  * Hook to create hover scale effect
  */
 export const useHoverScale = (scale = 1.05) => {
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = ref.current;
