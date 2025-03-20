@@ -14,8 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-// Gemini API Key
-const GEMINI_API_KEY = "AIzaSyBRg34-3AS1XPFi0cS2p13iNmtIJvY6Rp8";
+// DeepSeek API Key
+const DEEPSEEK_API_KEY = "sk-392a95fc7d2445f6b6c79c17725192d1";
 
 // 类型定义
 type QuoteCategory = "classic" | "chinese" | "movies" | "scientists";
@@ -95,22 +95,27 @@ const SciFiGenerator = () => {
           break;
       }
       
-      // 调用Gemini API
-      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + GEMINI_API_KEY, {
+      // 调用DeepSeek API
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 200,
-          }
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: "你是一个科幻名言生成助手，请始终以JSON格式返回内容。"
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 200
         })
       });
 
@@ -122,8 +127,8 @@ const SciFiGenerator = () => {
 
       const data = await response.json();
       
-      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0].text) {
-        const responseText = data.candidates[0].content.parts[0].text;
+      if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+        const responseText = data.choices[0].message.content;
         
         try {
           // 尝试从响应中提取JSON部分
