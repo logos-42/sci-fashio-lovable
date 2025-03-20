@@ -29,32 +29,32 @@ const Hero = () => {
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div ref={circleRef} className="absolute right-[-10%] top-[-10%] w-[70%] h-[70%] rounded-full bg-design-light opacity-70 transition-transform duration-500 ease-out"></div>
-        <div className="absolute left-[-5%] bottom-[-15%] w-[40%] h-[40%] rounded-full bg-design backdrop-blur-xs opacity-30"></div>
+        <div ref={circleRef} className="absolute right-[-10%] top-[-10%] w-[70%] h-[70%] rounded-full bg-indigo-300 opacity-70 transition-transform duration-500 ease-out"></div>
+        <div className="absolute left-[-5%] bottom-[-15%] w-[40%] h-[40%] rounded-full bg-purple-400 backdrop-blur-xs opacity-30"></div>
       </div>
       
       <div className="section-container relative z-10">
-        <div className="max-w-3xl" ref={ref}>
-          <div className={`transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="chip mb-6">Design • AI • Fashion</div>
+        <div className="max-w-3xl">
+          <div ref={ref as React.RefObject<HTMLDivElement>} className={`transition-all duration-1000 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="chip mb-6">科幻 • AI • 灵感</div>
             <h1 className="heading-xl mb-6 text-balance">
-              Create stunning fashion designs with the power of AI
+              用AI探索科幻的无限可能
             </h1>
-            <p className="body-lg text-fashion-600 mb-8 max-w-2xl text-balance">
-              Transform your ideas into beautiful fashion designs with our intelligent design studio. Unleash your creativity with AI-powered tools.
+            <p className="body-lg text-gray-600 mb-8 max-w-2xl text-balance">
+              通过Gemini人工智能，生成经典科幻作品中的名言警句和科幻大师的至理名言，为您的创作提供灵感。
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button 
-                onClick={() => scrollToElement('studio')}
+                onClick={() => scrollToElement('generator')}
                 className="button-primary"
               >
-                Start Designing
+                开始生成
               </button>
               <button 
-                onClick={() => scrollToElement('features')}
+                onClick={() => scrollToElement('quotes')}
                 className="button-secondary"
               >
-                Explore Features
+                浏览名言
               </button>
             </div>
           </div>

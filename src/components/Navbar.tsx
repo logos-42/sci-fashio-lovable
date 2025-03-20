@@ -1,138 +1,110 @@
 
 import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-
-interface NavLink {
-  label: string;
-  href: string;
-}
-
-const navLinks: NavLink[] = [
-  { label: "Studio", href: "#studio" },
-  { label: "Features", href: "#features" },
-  { label: "Gallery", href: "#gallery" },
-  { label: "About", href: "#about" },
-];
+import { useMobile } from "@/hooks/use-mobile";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const isMobile = useMobile();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
 
+  // 导航链接
+  const navLinks = [
+    { name: "名言生成器", href: "#generator" },
+    { name: "名言集锦", href: "#quotes" },
+    { name: "科幻素材", href: "#resources" },
+    { name: "博客", href: "/blog" },
+    { name: "帮助", href: "/help" }
+  ];
+
+  // 滚动监听
   useEffect(() => {
     const handleScroll = () => {
-      const offset = window.scrollY;
-      if (offset > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 10);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle smooth scrolling for anchor links
-  const handleNavLinkClick = (href: string) => {
-    setIsOpen(false);
-    
-    if (href.startsWith('#')) {
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+  // 关闭菜单（当窗口大小改变时）
+  useEffect(() => {
+    if (!isMobile) setIsMenuOpen(false);
+  }, [isMobile]);
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const navbarClass = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    isScrolled ? "py-3 bg-white shadow-sm" : "py-5 bg-transparent"
+  }`;
+
+  const isActive = (href: string) => {
+    if (href.startsWith("#")) {
+      return location.hash === href || (!location.hash && href === "#");
     }
+    return location.pathname === href;
   };
 
   return (
-    <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled 
-          ? "backdrop-blur-md bg-white/80 shadow-subtle py-3" 
-          : "bg-transparent py-5"
-      )}
-    >
-      <div className="section-container flex items-center justify-between">
-        <a href="/" className="flex items-center space-x-2 z-10">
-          <span className="font-serif text-2xl tracking-tight">Fashion</span>
-          <span className="font-mono text-sm tracking-widest">AI</span>
-        </a>
+    <nav className={navbarClass}>
+      <div className="section-container flex justify-between items-center">
+        {/* Logo */}
+        <Link to="/" className="flex items-center">
+          <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            SCI-FI AI
+          </span>
+        </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex space-x-8">
+        {/* Desktop 导航链接 */}
+        <div className="hidden md:flex items-center space-x-1">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => {
-                e.preventDefault();
-                handleNavLinkClick(link.href);
-              }}
-              className="text-sm font-medium text-fashion-800 hover:text-fashion-600 transition-colors relative group"
+            <Link
+              key={link.name}
+              to={link.href}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive(link.href)
+                  ? "text-indigo-700"
+                  : "text-gray-700 hover:text-indigo-600"
+              }`}
             >
-              {link.label}
-              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-fashion-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
-            </a>
+              {link.name}
+            </Link>
           ))}
-        </nav>
-
-        <div className="hidden md:flex space-x-4 items-center">
-          <a
-            href="#getstarted"
-            onClick={(e) => {
-              e.preventDefault();
-              handleNavLinkClick('#studio');
-            }}
-            className="button-primary"
-          >
-            Get Started
-          </a>
         </div>
 
-        {/* Mobile menu button */}
+        {/* 移动端菜单按钮 */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden z-10 focus:outline-none"
+          className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none"
+          onClick={toggleMenu}
           aria-label="Toggle menu"
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile Navigation Overlay */}
-      <div
-        className={cn(
-          "fixed inset-0 bg-white flex flex-col items-center justify-center space-y-8 transition-opacity duration-300 md:hidden",
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-      >
-        {navLinks.map((link) => (
-          <a
-            key={link.href}
-            href={link.href}
-            onClick={(e) => {
-              e.preventDefault();
-              handleNavLinkClick(link.href);
-            }}
-            className="text-2xl font-medium text-fashion-900 hover:text-fashion-700"
-          >
-            {link.label}
-          </a>
-        ))}
-        <a
-          href="#getstarted"
-          onClick={(e) => {
-            e.preventDefault();
-            handleNavLinkClick('#studio');
-          }}
-          className="mt-4 button-primary"
-        >
-          Get Started
-        </a>
-      </div>
-    </header>
+      {/* 移动端菜单 */}
+      {isMobile && isMenuOpen && (
+        <div className="md:hidden bg-white border-t">
+          <div className="section-container py-4 space-y-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                className={`block px-4 py-3 rounded-md text-base font-medium transition-colors ${
+                  isActive(link.href)
+                    ? "text-indigo-700 bg-indigo-50"
+                    : "text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </nav>
   );
 };
 
