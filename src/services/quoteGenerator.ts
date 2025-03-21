@@ -26,6 +26,9 @@ export const generateSciFiQuote = async (theme: string, category: QuoteCategory)
         break;
     }
     
+    console.log("开始调用DeepSeek API生成科幻名言...");
+    console.log("API Key:", DEEPSEEK_API_KEY);
+    
     // 调用DeepSeek API
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
@@ -51,10 +54,16 @@ export const generateSciFiQuote = async (theme: string, category: QuoteCategory)
     });
 
     const data = await response.json();
+    console.log("DeepSeek API返回数据:", data);
+    
+    if (data.error) {
+      console.error("DeepSeek API错误:", data.error);
+      throw new Error(data.error.message || "API调用失败");
+    }
     
     if (data.choices && data.choices.length > 0 && data.choices[0].message.content) {
       const responseText = data.choices[0].message.content;
-      console.log("DeepSeek API response:", responseText);
+      console.log("DeepSeek API返回文本:", responseText);
       
       try {
         // 尝试提取和解析JSON响应

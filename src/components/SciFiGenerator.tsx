@@ -29,11 +29,14 @@ const SciFiGenerator = () => {
     setGeneratedQuote(null);
     
     try {
+      console.log(`正在使用DeepSeek AI生成科幻名言，主题: ${theme || "默认"}, 类别: ${category}`);
       const quoteData = await generateSciFiQuote(theme, category);
+      console.log("生成成功:", quoteData);
       setGeneratedQuote(quoteData);
+      toast.success("科幻名言生成成功！");
     } catch (error) {
       console.error("生成科幻名言失败:", error);
-      toast.error("生成失败，请重试");
+      toast.error("生成失败，将显示随机经典名言");
       // 如果API调用失败，使用随机名言
       generateRandomQuote();
     } finally {
@@ -51,6 +54,7 @@ const SciFiGenerator = () => {
       const randomQuote = getRandomClassicQuote();
       setGeneratedQuote(randomQuote);
       setIsGenerating(false);
+      toast.success("已生成随机经典名言");
     }, 1000);
   };
 
